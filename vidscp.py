@@ -17,7 +17,7 @@ from multiprocessing import Pool
 im_niter = 1000
 im_cell = '1.0arcsec'
 
-im_npix_ref = [6000,6000]
+im_npix_ref = [5000,5000]
 im_cell_ref = '1.0arcsec'
 im_niter_ref = 5000
 im_robust_ref = 0.0
@@ -27,7 +27,7 @@ im_cell_out = '1.0arcsec'
 im_niter_out = 400
 im_robust_out = 0.0
 
-im_wplanes = 128
+im_wplanes = 64
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 def info(message):
@@ -425,7 +425,7 @@ def makeSkyModels(name_list):
 	# in case selective subtraction is needed later.
 	lsm_list = []
 	for item in name_list:
-		img = bdsm.process_image(item+'.fits',thresh_pix=7.0,thresh_isl=2.0)
+		img = bdsm.process_image(item+'.fits',thresh_pix=10.0,thresh_isl=3.0)
 		if not img.write_catalog(format='ascii',catalog_type='gaul'):
 			redinfo('No sources found in '+item+'.fits')
 		else:
