@@ -3,9 +3,6 @@ import ms,mqt
 import glob
 import os
 
-JOBS = 4
-JOB_STAGGER = 10
-
 def resetCal():
 	xx = glob.glob(MS.rstrip('/')+'/*.fmep')
 	for item in xx:
