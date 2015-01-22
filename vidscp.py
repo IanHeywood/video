@@ -461,8 +461,8 @@ def makeSpectralSkyModels(name_list):
 			tiggerConvert(item+'.pybdsm.gaul')
 			oplsm = item+'.pybdsm.lsm.html'
 			spilsm = item+'.pybdsm.spi.lsm.html'
-			imgalpha = item.replace('.image.tt0.fits','.alpha.fits')
-			imgalphaerr = item.replace('.image.tt0.fits','.alpha.error.fits')
+			imgalpha = item.replace('.image.tt0','.alpha')+'.fits'
+			imgalphaerr = item.replace('.image.tt0','.alpha.error')+'.fits'
 			addSPI(imgalpha,imgalphaerr,oplsm,spilsm)
 			lsm_list.append(spilsm)
 			if item.find('outlier') != -1:
