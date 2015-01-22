@@ -493,12 +493,10 @@ def remakeSkyModels(name_list):
 			redinfo(item+'.pybdsm.gaul not found')
 	return lsm_list
 	
-def mergeLSMs(lsmList):
-	# Master LSM will have same name depending on whether or not a spectral
-	# model is called.
+def mergeLSMs(lsmList,oplsm):
 	#lsmList = glob.glob('*spw0*.lsm.html')
 	temp = []
-	oplsm = 'master_'+lsmList[0].split('.ms')[0]+'.ms.pybdsm.lsm.html'
+#	oplsm = 'master_'+lsmList[0].split('.ms')[0]+'.ms.pybdsm.lsm.html'
 	for mylsm in lsmList:
 		info('lsmlist: '+mylsm)
 		lsm = Tigger.load(mylsm,verbose=True)
