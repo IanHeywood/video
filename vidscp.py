@@ -494,6 +494,8 @@ def remakeSkyModels(name_list):
 	return lsm_list
 	
 def mergeLSMs(lsmList):
+	# Master LSM will have same name depending on whether or not a spectral
+	# model is called.
 	#lsmList = glob.glob('*spw0*.lsm.html')
 	temp = []
 	oplsm = 'master_'+lsmList[0].split('.ms')[0]+'.ms.pybdsm.lsm.html'
