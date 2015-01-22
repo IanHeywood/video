@@ -440,7 +440,37 @@ def makeSkyModels(name_list):
 				syscall = 'tigger-tag '+item+'.pybdsm.lsm.html +OUT -f'
 				os.system(syscall)
 	return lsm_list
-	
+
+
+def makeSpectralSkyModels(name_list):
+	# Run PyBDSM on a list of images
+	# If the source finding is successful convert .gaul to Tigger format LSM
+	# Sources in Tigger LSMs derived from outliers are given the OUT tag
+	# in case selective subtraction is needed later.
+	lsm_list = []
+	for item in name_list:
+		img = bdsm.process_image(item+'.fits',thresh_pix=10.0,thresh_isl=3.0)
+		if not img.write_catalog(format='ascii',catalog_type='gaul'):
+			redinfo('No sources found in '+item+'.fits')
+		else:
+			info('Wrote '+item+'.pybdsm.gaul')
+#			b = getCleanBeam(item+'.fits')
+#			minExtent = numpy.mean(b[0],b[1])*3600.0
+#			info('Minimum extent for point/Gaussian distinction '+str(minExtent)+' arcsec')
+#			tiggerConvert(item+'.pybdsm.gaul',minExtent)
+			tiggerConvert(item+'.pybdsm.gaul')
+			oplsm = item+'.pybdsm.lsm.html'
+			spilsm = item+'.pybdsm.spi.lsm.html'
+			imgalpha = item.replace('.image.tt0.fits','.alpha.fits')
+			imgalphaerr = item.replace('.image.tt0.fits','.alpha.error.fits')
+			addSPI(imgalpha,imgalphaerr,oplsm,spilsm)
+			lsm_list.append(spilsm)
+			if item.find('outlier') != -1:
+				syscall = 'tigger-tag '+item+'.pybdsm.lsm.html +OUT -f'
+				os.system(syscall)
+	return lsm_list
+
+
 def remakeSkyModels(name_list):
 	# Repeats the steps of makeSkyModels but without invoking PyBDSM
 	# i.e. it reprocess the .gaul catalogues into Tigger format LSMs.
@@ -584,56 +614,6 @@ def addSPI(fitsname_alpha=None, fitsname_alpha_error=None, lsmname=None, outfile
 
 	model.save(outfile)
 
-
-def makeSpectralModel(lsm,alpha,beta):
-	# USE SPHE'S VERSION
-	# LSM is a Tigger format sky model
-	# alpha is a FITS image of the alpha map from mfs nterms > 1
-	# beta is the FITS image of the beta map from mfs nterms > 2
-	input_hdu = pyfits.open(alpha)[0]
-	hdr = input_hdu.header
-	WCS = astWCS.WCS(hdr,mode='pyfits')
-	alphas = getImageData(alpha)
-	betas = getImageData(beta)
-	mylsm = Tigger.load(lsm,verbose=True)
-	sources = mylsm.sources
-	padding = 1 # pixels either side of position, mean alpha and beta returned over this patch
-	for src in sources:
-		ra_d = rad2deg(src.pos.ra)
-		dec_d = rad2deg(src.pos.dec)
-		ra_pix,dec_pix = WCS.wcs2pix(ra_d,dec_d)
-		if padding > 0:
-			x0,x1 = int(ra_pix-padding),int(ra_pix+padding)
-			y0,y1 = int(dec_pix-padding),int(dec_pix+padding)
-			alpha = numpy.mean(alphas[y0:y1,x0:x1])
-			beta = numpy.mean(betas[y0:y1,x0:x1])
-			print x0,y0,x1,y1
-		else:
-			alpha = alphas[ra_pix,dec_pix]
-			beta = betas[ra_pix,dec_pix]
-			print ra_pix,dec_pix
-		print src.name,ra_d,dec_d,alpha,beta
-		src.spectrum = Tigger.Models.ModelClasses.SpectralIndex([alpha,beta],1400.0)
-	Tigger.save(mylsm,'test.lsm.html',verbose=True)
-
-#~ def mergeLSMs(inputList,outputLsm):
-	# DEFUNCT VERSION USING .gaul FILES
-	# DOES NOT PRESERVE TAGS!!
-	#~ # Merge all the .gaul models into a master tigger format LSM
-	#~ with open(outputLsm,'w') as outfile:
-		#~ for inputFile in inputList:
-			#~ with open(inputFile) as infile:
-				#~ for line in infile:
-					#~ outfile.write(line)
-	#~ tiggerConvert(outputLsm)
-	#~ info('Merged LSMs: '+str(inputList)+' into '+outputLsm+'.lsm.html')
-	#~ return outputLsm.rstrip('.gaul')+'.lsm.html'
-
-#def tiggerConvert(inputLsm,minExtent):
-# Old version with wrong columns
-#        tiggerLsm = inputLsm.replace('.gaul','.lsm.html')
-#        syscall = 'tigger-convert '+inputLsm+' '+tiggerLsm+' -t ASCII --format "name Isl_id Source_id Wave_id ra_d E_RA de$
-#        os.system(syscall)
 
 def tiggerConvert(gaul):
 	args = []

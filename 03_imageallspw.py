@@ -12,7 +12,8 @@ for myms in xx:
 		tt.done()
 	else:
 		tt.done()
-		imgname = 'img_'+myms+'_5k_stefcal_ap_8_8_resid'
+#		imgname = 'img_'+myms+'_5k_stefcal_ap_8_8_resid'
+		imgname = 'img_'+myms+'_5k_postflag'
 		if os.path.exists(imgname+'.fits'):
 			redinfo(imgname+'.fits exists, skipping')
 		else:
