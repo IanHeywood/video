@@ -418,14 +418,14 @@ def makeAllImages(msName,iteration,outliers,dryrun):
 	
 	return name_list
 
-def makeSkyModels(name_list):
+def makeSkyModels(name_list,tpix,tisl):
 	# Run PyBDSM on a list of images
 	# If the source finding is successful convert .gaul to Tigger format LSM
 	# Sources in Tigger LSMs derived from outliers are given the OUT tag
 	# in case selective subtraction is needed later.
 	lsm_list = []
 	for item in name_list:
-		img = bdsm.process_image(item+'.fits',thresh_pix=10.0,thresh_isl=3.0)
+		img = bdsm.process_image(item+'.fits',thresh_pix=tpix,thresh_isl=tisl)
 		if not img.write_catalog(format='ascii',catalog_type='gaul'):
 			redinfo('No sources found in '+item+'.fits')
 		else:
@@ -442,14 +442,14 @@ def makeSkyModels(name_list):
 	return lsm_list
 
 
-def makeSpectralSkyModels(name_list):
+def makeSpectralSkyModels(name_list,tpix,tisl):
 	# Run PyBDSM on a list of images
 	# If the source finding is successful convert .gaul to Tigger format LSM
 	# Sources in Tigger LSMs derived from outliers are given the OUT tag
 	# in case selective subtraction is needed later.
 	lsm_list = []
 	for item in name_list:
-		img = bdsm.process_image(item+'.fits',thresh_pix=10.0,thresh_isl=3.0)
+		img = bdsm.process_image(item+'.fits',thresh_pix=tpix,thresh_isl=tisl)
 		if not img.write_catalog(format='ascii',catalog_type='gaul'):
 			redinfo('No sources found in '+item+'.fits')
 		else:

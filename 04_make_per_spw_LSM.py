@@ -14,7 +14,7 @@ for i in range(0,1):
 		info('Considering the following files:')
 		for item in name_list:
 			info('    '+spw+' '+item)			
-		lsm_list = makeSpectralSkyModels(name_list)
+		lsm_list = makeSpectralSkyModels(name_list,7.0,3.0)
 		#lsm_list = remakeSkyModels(name_list)
 		master_lsm = mergeLSMs(lsm_list)
 	else:
