@@ -12,10 +12,10 @@ for myms in xx:
 		tt.done()
 	else:
 		tt.done()
-		imgname = 'img_'+myms+'_6k_postflag'
+		imgname = 'img_'+myms+'_5k_stefcal_ap_8_8_resid'
 		if os.path.exists(imgname+'.fits'):
 			redinfo(imgname+'.fits exists, skipping')
 		else:
 			info(myms+' --> '+imgname)
-			imageMSmfs(myms,imgname,im_npix_ref,im_cell_ref,im_niter,im_wplanes,im_robust_ref,'')
+			imageMSmfs(myms,imgname,im_npix_ref,im_cell_ref,im_niter,im_wplanes,im_robust_ref,'',True)
 	

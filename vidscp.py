@@ -63,9 +63,9 @@ def imageMS(msName,imageName,npix,cell,niter,wplanes,robust,pcent):
 		syscall = 'rm -rf '+imageName+ext
 		os.system(syscall)
 		
-def imageMSmfs(msName,imageName,npix,cell,niter,wplanes,robust,pcent):
+def imageMSmfs(msName,imageName,npix,cell,niter,wplanes,robust,pcent,cleanupimages):
 	# image MFS nterms = 2
-	cleanupimages = True
+	# cleanupimages = True
 	cc = 'clean('
 	cc += 'vis="'+msName+'",'
 	cc += 'imagename="'+imageName+'",'

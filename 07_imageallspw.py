@@ -16,5 +16,5 @@ for myms in xx:
 		if os.path.isfile(imgname+'.fits'):
 			print imgname+'.fits exists, skipping'
 		else:
-			imageMS(myms,imgname,im_npix_ref,im_cell_ref,6000,im_wplanes,im_robust_ref,'')
+			imageMSmfs(myms,imgname,im_npix_ref,im_cell_ref,6000,im_wplanes,im_robust_ref,'',False)
 	
