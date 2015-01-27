@@ -440,7 +440,38 @@ def makeSkyModels(name_list,tpix,tisl):
 				syscall = 'tigger-tag '+item+'.pybdsm.lsm.html +OUT -f'
 				os.system(syscall)
 	return lsm_list
-
+	
+def makeSingleSpectralSkyModels(item,tpix,tisl):
+	# Run PyBDSM on a single image
+	# Pass the handling of lists to the script that calls this, mainly to have
+	# different thresholds for the initial and residual sky models
+	# If the source finding is successful convert .gaul to Tigger format LSM
+	# Sources in Tigger LSMs derived from outliers are given the OUT tag
+	# in case selective subtraction is needed later.
+	# If the input FITS file has 'resid' in the name then sources are given the RESID tag
+	img = bdsm.process_image(item,thresh_pix=tpix,thresh_isl=tisl)
+	if not img.write_catalog(format='ascii',catalog_type='gaul'):
+		redinfo('No sources found in '+item+'.fits')
+	else:
+		info('Wrote '+item+'.pybdsm.gaul')
+#			b = getCleanBeam(item+'.fits')
+#			minExtent = numpy.mean(b[0],b[1])*3600.0
+#			info('Minimum extent for point/Gaussian distinction '+str(minExtent)+' arcsec')
+#			tiggerConvert(item+'.pybdsm.gaul',minExtent)
+		tiggerConvert(item.replace('.fits','.pybdsm.gaul'))
+		oplsm = item.replace('.fits','.pybdsm.lsm.html')
+		spilsm = item.replace('.fits','.pybdsm.spi.lsm.html')
+		imgalpha = item.replace('.image.tt0.fits','.alpha.fits')
+		imgalphaerr = item.replace('.image.tt0.fits','.alpha.error.fits')
+		addSPI(imgalpha,imgalphaerr,oplsm,spilsm)
+		if item.find('outlier') != -1:
+			syscall = 'tigger-tag '+item.replace('.fits','.pybdsm.spi.lsm.html')+' +OUT -f'
+			os.system(syscall)
+		if item.find('resid') != -1:
+			syscall = 'tigger-tag '+item.replace('.fits','.pybdsm.spi.lsm.html')+' +RESID -f'
+			os.system(syscall)
+		os.system('rm '+oplsm)
+	return spilsm
 
 def makeSpectralSkyModels(name_list,tpix,tisl):
 	# Run PyBDSM on a list of images
@@ -466,7 +497,7 @@ def makeSpectralSkyModels(name_list,tpix,tisl):
 			addSPI(imgalpha,imgalphaerr,oplsm,spilsm)
 			lsm_list.append(spilsm)
 			if item.find('outlier') != -1:
-				syscall = 'tigger-tag '+item+'.pybdsm.lsm.html +OUT -f'
+				syscall = 'tigger-tag '+item+'.pybdsm.spi.lsm.html +OUT -f'
 				os.system(syscall)
 	return lsm_list
 
@@ -553,7 +584,6 @@ def addSPI(fitsname_alpha=None, fitsname_alpha_error=None, lsmname=None, outfile
 	rad = lambda a: a*(180/np.pi) # convert radians to degrees
 	psf = getCleanBeam(fitsname_alpha)
 	beam = numpy.max((psf[0],psf[1]))
-	print 'BEAM: ',beam,'!!!!!!!!!!!!!!!'
 
 	for src in model.sources:
 		ra = rad(src.pos.ra)
@@ -564,8 +594,8 @@ def addSPI(fitsname_alpha=None, fitsname_alpha_error=None, lsmname=None, outfile
 		
 		
 		if np.sqrt((ra-fits_alpha["ra"])**2 + (dec-fits_alpha["dec"])**2)>tol: # exclude sources within {tol} of phase centre
-			dra = rad(src.shape.ex) if src.shape  else beam # cater for point sources
-			ddec = rad(src.shape.ex) if src.shape  else beam # assume source extent equal to the Gaussian major axis along both ra and dec axes
+			dra = rad(src.shape.ex) if src.shape else beam # cater for point sources
+			ddec = rad(src.shape.ex) if src.shape else beam # assume source extent equal to the Gaussian major axis along both ra and dec axes
 			rgn = sky2px(fits_alpha["wcs"],ra,dec,dra,ddec,fits_alpha["dra"]) # Determine region of interest
 
 			#subIm_alpha = image_alpha[rgn[2]:rgn[3], rgn[0]:rgn[1]]  # Sample region of interest
