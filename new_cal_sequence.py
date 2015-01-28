@@ -6,7 +6,6 @@ parser.add_option('-m','--ms',dest='myms',help='Measurement Set to process')
 (options,args) = parser.parse_args()
 myms = options.myms
 
-myms = 'sb26444701_VIDEO_VLA9_pr2_spw1.ms'
 img1 = 'img_'+myms+'_5k_postflag'
 img2 = 'img_'+myms+'_5k_stefcal_ap_8_8_spi_resid'
 img3 = 'img_'+myms+'_5k_stefcal_ap_8_8_spi'
