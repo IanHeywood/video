@@ -316,6 +316,14 @@ def getRefDirDegs(msName):
 		msRA += 360.0
 	tt.done()
 	return msRA,msDec
+	
+def getSpectralInfo(msName,spw):
+	tt = tables.table(msName.rstrip('/')+'/SPECTRAL_WINDOW')
+	nChan = tt.getcol(columnname='NUM_CHAN',startrow=int(spw),nrow=1)
+	chanFreqs = numpy.array(tt.getcol(columnname='CHAN_FREQ',startrow=int(spw),nrow=1))
+	tt.done()
+	return nChan,chanFreqs
+
 
 def deg2rad(a):
 	return a*numpy.pi/180.0
