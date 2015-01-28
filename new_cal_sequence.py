@@ -1,4 +1,5 @@
 from vidscp import *
+import mqt
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -36,4 +37,4 @@ lsm3 = mergeLSMs([lsm1,lsm2],oplsm)
 # stefcal on master LSM
 mqt.run(script='calico-stefcal.py',job='stefcal',section='VID_stefcal_smooth',config='tdlconf.profiles',args=['tiggerlsm.filename='+lsm3,'ms_sel.msname='+myms,'ms_sel.ddid_index='+str(spw),'stefcal_gain.table='+gaintab])
 # Final image
-imageMSmfs(myms,img2,im_npix_ref,im_cell_ref,10000,im_wplanes,im_robust_ref,'',True)
+imageMSmfs(myms,img3,im_npix_ref,im_cell_ref,10000,im_wplanes,im_robust_ref,'',True)
