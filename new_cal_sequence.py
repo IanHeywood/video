@@ -1,4 +1,5 @@
 from vidscp import *
+import mqt
 from optparse import OptionParser
 
 parser = OptionParser()
