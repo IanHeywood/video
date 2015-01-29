@@ -32,11 +32,11 @@ im_wplanes = 64
 
 def info(message):
 	# Might want to add a log file or something
-	print '\033[92m ----> '+message+'\033[0m'
+	print '\033[92m--> '+message+'\033[0m'
 
 def redinfo(message):
 	# Might want to add a log file or something
-	print '\033[91m ----> '+message+'\033[0m'
+	print '\033[91m--> '+message+'\033[0m'
 
 def imageMS(msName,imageName,npix,cell,niter,wplanes,robust,pcent):
 	# General purpose imaging routine
@@ -581,59 +581,57 @@ def addSPI(fitsname_alpha=None, fitsname_alpha_error=None, lsmname=None, outfile
 		takes in a spectral index map, input lsm and output lsm name.
 	"""
 #	import pylab as plt
-	print "INFO: Getting fits info from: %s, %s" %(fitsname_alpha, fitsname_alpha_error)
+	info('INFO: Getting fits info from: %s, %s' %(fitsname_alpha, fitsname_alpha_error))
 
 	fits_alpha = fitsInfo(fitsname_alpha)	# Get fits info
 	fits_alpha_error = fitsInfo(fitsname_alpha_error)
 	image_alpha = fits_alpha['image'][0,0] 	# get image data
 	image_alpha_error = fits_alpha_error['image'][0,0]
 
+	imshape = fits_alpha['image'].shape
+	max_x,max_y = imshape[3],imshape[2]
+	info('Alpha image extent: '+str(max_x)+' '+str(max_y))
+
 	model = Tigger.load(lsmname)	# load sky model
 	rad = lambda a: a*(180/np.pi) # convert radians to degrees
 	psf = getCleanBeam(fitsname_alpha)
+	info('Alpha PSF info from header: '+str(psf))
 	beam = numpy.max((psf[0],psf[1]))
 
 	for src in model.sources:
 		ra = rad(src.pos.ra)
 		dec = rad(src.pos.dec)
-		tol = 30./3600. # Tolerance, only add SPIs to sources outside this tolerance (radial distance from centre)
+
+		# Guess this is a 3C147 hangover...
+		# tol = 30./3600. # Tolerance, only add SPIs to sources outside this tolerance (radial distance from centre)
 		
-		#beam = 3.971344894833e-03 # psf size, assume all sources are at least as large as the psf
-		
+		tol = 0.0
 		
 		if np.sqrt((ra-fits_alpha["ra"])**2 + (dec-fits_alpha["dec"])**2)>tol: # exclude sources within {tol} of phase centre
 			dra = rad(src.shape.ex) if src.shape else beam # cater for point sources
 			ddec = rad(src.shape.ex) if src.shape else beam # assume source extent equal to the Gaussian major axis along both ra and dec axes
 			rgn = sky2px(fits_alpha["wcs"],ra,dec,dra,ddec,fits_alpha["dra"]) # Determine region of interest
-
-			#subIm_alpha = image_alpha[rgn[2]:rgn[3], rgn[0]:rgn[1]]  # Sample region of interest
-			#subIm_alpha_error = image_alpha_error[rgn[2]:rgn[3], rgn[0]:rgn[1]]
+			print src.name,rgn
 
 			subIm_alpha_nonan = []
 			subIm_alpha_error_nonan = []
+
+			if rgn[0] < 0:
+				rgn[0] = 0
+			if rgn[1] > max_x:
+				rgn[1] = max_x
+			if rgn[2] < 0:
+				rgn[2] = 0
+			if rgn[3] > max_y:
+				rgn[3] = max_y
 
 			for (x,y) in zip(range(rgn[2],rgn[3]), range(rgn[0],rgn[1])):
 				if np.isnan(image_alpha[x,y])==False and np.isnan(image_alpha_error[x,y])==False:
 					subIm_alpha_nonan.append(image_alpha[x,y])
 					subIm_alpha_error_nonan.append(image_alpha_error[x,y])
 
-			#print "subIm_alpha_nonan      :", subIm_alpha_nonan
-			#print "subIm_alpha_error_nonan:", subIm_alpha_error_nonan
-			#print "length:
-
-			#subIm_alpha_nonan = subIm_alpha[np.isnan(subIm_alpha_error)==False]
-			#subIm_alpha_error = image_alpha_error[rgn[2]:rgn[3], rgn[0]:rgn[1]]
-			#subIm_alpha_error_nonan = subIm_alpha_error[np.isnan(subIm_alpha_error)==False]
-
 			subIm_weight = [1.0/subIm_alpha_error_nonan[i] for i in range(len(subIm_alpha_error_nonan))]
-			#print "\n"
-			#print "subIm_weight:", subIm_weight
-			#print "\n"
-
 			subIm_weighted = [subIm_alpha_nonan[i]*subIm_weight[i] for i in range(len(subIm_alpha_nonan))]
-
-			#print "subIm_weighted:", subIm_weighted
-			#print "\n\n"
 
 			if len(subIm_weight)>0:
 			#	subIm_normalization = subIm_weight.sum()
