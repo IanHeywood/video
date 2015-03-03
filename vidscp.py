@@ -426,6 +426,16 @@ def makeAllImages(msName,iteration,outliers,dryrun):
 	
 	return name_list
 
+def makeSkyModel(fitsfile,tpix,tisl):
+	# Run PyBDSM on fitsfile
+	img = bdsm.process_image(fitsfile,thresh_pix=tpix,thresh_isl=tisl)
+	if not img.write_catalog(format='ascii',catalog_type='gaul',clobber=True):
+		redinfo('No sources found in '+fitsfile)
+	else:
+		lsm_out = fitsfile.replace('.fits','.pybdsm.gaul')
+		info('Wrote '+lsm_out)
+	return lsm_out
+
 def makeSkyModels(name_list,tpix,tisl):
 	# Run PyBDSM on a list of images
 	# If the source finding is successful convert .gaul to Tigger format LSM
@@ -649,7 +659,66 @@ def addSPI(fitsname_alpha=None, fitsname_alpha_error=None, lsmname=None, outfile
 				print "ALERT: no spi info found in %s for source %s"%(fitsname_alpha,src.name)
 
 	model.save(outfile)
+	
+def addAlphaBeta(fitsname_alpha=None, fitsname_alpha_error=None, fitsname_beta=None, lsmname=None, outfile=None):
+	# Not.. Buck Murdoch?
 
+	print "INFO: Getting fits info from: %s, %s" %(fitsname_alpha, fitsname_alpha_error)
+
+	fits_alpha = fitsInfo(fitsname_alpha)	# Get fits info
+	fits_alpha_error = fitsInfo(fitsname_alpha_error)
+	fits_beta = fitsInfo(fitsname_beta)
+	image_alpha = fits_alpha['image'][0,0] 	# get image data
+	image_alpha_error = fits_alpha_error['image'][0,0]
+	image_beta = fits_beta['image'][0,0]
+
+	model = Tigger.load(lsmname)	# load sky model
+	rad = lambda a: a*(180/numpy.pi) # convert radians to degrees
+	psf = getCleanBeam(fitsname_alpha)
+	beam = numpy.max((psf[0],psf[1]))
+	print 'BEAM: ',beam,'!!!!!!!!!!!!!!!'
+
+	for src in model.sources:
+		ra = rad(src.pos.ra)
+		dec = rad(src.pos.dec)
+		# Tolerance is a hangover from 3C147 HDR 
+		tol = 0./3600. # Tolerance, only add SPIs to sources outside this tolerance (radial distance from centre)
+
+		if numpy.sqrt((ra-fits_alpha["ra"])**2 + (dec-fits_alpha["dec"])**2)>tol: # exclude sources within {tol} of phase centre
+			dra = rad(src.shape.ex) if src.shape  else beam # cater for point sources
+			ddec = rad(src.shape.ex) if src.shape  else beam # assume source extent equal to the Gaussian major axis along both ra and dec axes
+			rgn = sky2px(fits_alpha["wcs"],ra,dec,dra,ddec,fits_alpha["dra"]) # Determine region of interest
+			rgn_beta = sky2px(fits_beta["wcs"],ra,dec,dra,ddec,fits_beta["dra"])
+
+			subIm_alpha_nonan = []
+			subIm_alpha_error_nonan = []
+			subIm_beta_nonan = []
+
+			for (x,y) in zip(range(rgn[2],rgn[3]), range(rgn[0],rgn[1])):
+				if numpy.isnan(image_alpha[x,y])==False and numpy.isnan(image_alpha_error[x,y])==False and numpy.isnan(image_beta[x,y])==False:
+					subIm_alpha_nonan.append(image_alpha[x,y])
+					subIm_alpha_error_nonan.append(image_alpha_error[x,y])
+					subIm_beta_nonan.append(image_beta[x,y])
+				
+			# Weights list computed from reciprocal of errors
+			subIm_weight = [1.0/subIm_alpha_error_nonan[i] for i in range(len(subIm_alpha_error_nonan))]
+			
+			# Alpha and Beta list multiplied by corresponding alpha weight
+			subIm_alpha_weighted = [subIm_alpha_nonan[i]*subIm_weight[i] for i in range(len(subIm_alpha_nonan))]
+			subIm_beta_weighted = [subIm_beta_nonan[i]*subIm_weight[i] for i in range(len(subIm_beta_nonan))]
+
+			if len(subIm_weight)>0:
+				subIm_normalization = numpy.sum(subIm_weight)
+
+			if len(subIm_alpha_weighted)>0 and len(subIm_beta_weighted) > 0:
+				alpha = numpy.sum(subIm_alpha_weighted)/subIm_normalization
+				beta = numpy.sum(subIm_beta_weighted)/subIm_normalization
+
+				print "Adding alpha,beta: %.2g %.2g (at %.3g MHz) to source %s"%(alpha,beta,fits_alpha['freq0']/1e6,src.name)
+				src.spectrum = Tigger.Models.ModelClasses.SpectralIndex([alpha,beta],fits_alpha["freq0"])
+			else:
+				print "No valid spectral info found in %s for source %s"%(fitsname_alpha,src.name)
+	model.save(outfile)
 
 def tiggerConvert(gaul):
 	args = []
@@ -691,6 +760,7 @@ def tiggerConvert(gaul):
 	#	"--min-extent",MIN_EXTENT,
 		split_args=False,
 		*args);
+	return output
 	
 def getSPW(name):
 	parts = name.split('_')
