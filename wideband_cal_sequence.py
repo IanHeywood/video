@@ -53,7 +53,7 @@ for spw in range(0,16):
 			'ms_sel.ddid_index='+spw,
 			'cal_g_phase.g_phase.nondefault_meptable='+p_fmep,
 			'cal_g_phase.g_ampl.nondefault_meptable='+a_fmep,
-			'do_output=CORR_RES'])
+			'do_output=CORR_DATA'])
 # 	mqt.run(script='turbo-sim.py',job='simulate',section='fake_src',config='tdlconf.profiles',args=['gridded_sky.center_source_flux='+s_flux,'ms_sel.ddid_index='+str(spw),'ms_sel.msname='+targetms])
 
 	
